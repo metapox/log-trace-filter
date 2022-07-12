@@ -18,5 +18,11 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    manifest {
+        attributes "Main-Class": "org.metapox.filters.LogTraceFilter.LogTraceFilter"
+    }
+}
+
 dependencies {
 }
