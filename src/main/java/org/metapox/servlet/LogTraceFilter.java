@@ -3,10 +3,16 @@ package org.metapox.servlet;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+
 import org.slf4j.MDC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LogTraceFilter implements Filter {
-    private final String TRACE_PARENT = "traceparent";
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private final String TRACE_PARENT_HEADER = "traceparent";
+    private final String TRACE_PARENT_KEY = "traceparent";
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -15,12 +21,14 @@ public class LogTraceFilter implements Filter {
     @Override
     public void doFilter(ServletRequest req, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest)req;
         try {
-            MDC.put(TRACE_PARENT, httpRequest.getHeader(TRACE_PARENT));
+            HttpServletRequest httpRequest = (HttpServletRequest) req;
+            MDC.put(TRACE_PARENT_KEY, httpRequest.getHeader(TRACE_PARENT_HEADER));
             chain.doFilter(req, response);
+        } catch (Exception e) {
+            log.error("Trace filter Error", e);
         } finally {
-            MDC.remove(TRACE_PARENT);
+            MDC.remove(TRACE_PARENT_KEY);
         }
     }
 
