@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.Assertions;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -16,8 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockitoAnnotations;
 import org.mockito.MockedStatic;
 import org.slf4j.MDC;
-
-import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 public class LogTraceFilterTest {
@@ -46,13 +43,48 @@ public class LogTraceFilterTest {
     }
 
     @Test
-    public void testDoFilter() throws IOException, ServletException{
+    // target doFilter
+    // requestのtraceparent ヘッダーがMDCのputに渡されること
+    public void testDoFilter_checkMdcPut() throws IOException, ServletException{
         // making mock
         try(MockedStatic<MDC> mdcMock = Mockito.mockStatic(MDC.class)) {
             Mockito.when(request.getHeader("traceparent")).thenReturn(dummyTraceparent);
 
             logTraceFilter.doFilter(request, response, filterChain);
             mdcMock.verify(() -> MDC.put("traceparent", dummyTraceparent));
+        }
+    }
+
+    @Test
+    // target doFilter
+    // chain.dofilterが適切な引数で呼ばれること
+    public void testDoFilter_checkChainDoFilter() throws IOException, ServletException{
+        logTraceFilter.doFilter(request, response, filterChain);
+        Mockito.verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    // target doFilter
+    // 正常実行時にMDC remove が呼ばれること
+    public void testDoFilter_checkMdcRemove() throws IOException, ServletException{
+        try(MockedStatic<MDC> mdcMock = Mockito.mockStatic(MDC.class)) {
+            Mockito.when(request.getHeader("traceparent")).thenReturn(dummyTraceparent);
+
+            logTraceFilter.doFilter(request, response, filterChain);
+            mdcMock.verify(() -> MDC.remove("traceparent"));
+        }
+    }
+
+    @Test
+    // target doFilter
+    // エラー検出時にMDC remove が呼ばれること
+    public void testDoFilter_check() throws IOException, ServletException{
+        try(MockedStatic<MDC> mdcMock = Mockito.mockStatic(MDC.class)) {
+            Mockito.when(request.getHeader("traceparent"))
+                    .thenThrow(new IllegalStateException("Error occurred"));
+
+            logTraceFilter.doFilter(request, response, filterChain);
+            mdcMock.verify(() -> MDC.remove("traceparent"));
         }
     }
 }
