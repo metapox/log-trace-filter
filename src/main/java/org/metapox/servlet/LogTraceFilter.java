@@ -24,11 +24,14 @@ public class LogTraceFilter implements Filter {
         try {
             HttpServletRequest httpRequest = (HttpServletRequest) req;
             MDC.put(TRACE_PARENT_KEY, httpRequest.getHeader(TRACE_PARENT_HEADER));
-            chain.doFilter(req, response);
         } catch (Exception e) {
             log.error("Trace filter Error", e);
         } finally {
-            MDC.remove(TRACE_PARENT_KEY);
+            try {
+                chain.doFilter(req, response);
+            } finally {
+                MDC.remove(TRACE_PARENT_KEY);
+            }
         }
     }
 
