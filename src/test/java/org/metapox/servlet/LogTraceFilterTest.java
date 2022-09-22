@@ -22,13 +22,10 @@ public class LogTraceFilterTest {
     private AutoCloseable closeable;
     @InjectMocks
     private LogTraceFilter logTraceFilter;
-
     @Mock
     private HttpServletRequest request;
-
     @Mock
     private ServletResponse response;
-
     @Mock
     private FilterChain filterChain;
 
@@ -65,7 +62,7 @@ public class LogTraceFilterTest {
 
     @Test
     // target doFilter
-    // 正常実行時にMDC remove が呼ばれること
+    // 正常実行時にMDC.removeが呼ばれること
     public void testDoFilter_checkMdcRemove() throws IOException, ServletException{
         try(MockedStatic<MDC> mdcMock = Mockito.mockStatic(MDC.class)) {
             Mockito.when(request.getHeader("traceparent")).thenReturn(dummyTraceparent);
@@ -77,7 +74,7 @@ public class LogTraceFilterTest {
 
     @Test
     // target doFilter
-    // エラー検出時にMDC remove が呼ばれること
+    // エラー検出時にMDC.removeが呼ばれること
     public void testDoFilter_check() throws IOException, ServletException{
         try(MockedStatic<MDC> mdcMock = Mockito.mockStatic(MDC.class)) {
             Mockito.when(request.getHeader("traceparent"))
